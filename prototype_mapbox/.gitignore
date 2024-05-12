@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+/prototype_mapbox/app/src/main/res/values/developer-config.xml
