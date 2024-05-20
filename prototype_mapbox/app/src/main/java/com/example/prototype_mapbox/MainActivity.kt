@@ -10,10 +10,10 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
-import com.mapbox.maps.plugin.PuckBearing
+import com.mapbox.maps.plugin.gestures.gestures
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.createDefault2DPuck
 import com.mapbox.maps.plugin.locationcomponent.location
-import com.mapbox.maps.plugin.viewport.viewport
 
 class MainActivity : ComponentActivity() {
     private lateinit var mapView: MapView
@@ -21,6 +21,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // https://docs.mapbox.com/android/maps/guides/user-location/permissions/
+        // prompts the user for location
+        // copied from:
+        // https://github.com/mapbox/mapbox-maps-android/blob/v11.3.1/app/src/main/java/com/mapbox/maps/testapp/utils/LocationPermissionHelper.kt
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
             // Permission sensitive logic called here, such as activating the Maps SDK's LocationComponent to show the device's location
         } else {
@@ -51,6 +54,7 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 //        enableEdgeToEdge()
+        // Retrieves the mapbox token from developer-config.xml resources
         MapboxOptions.accessToken = getString(R.string.mapbox_access_token_public)
 //        setContent {
 ////            Prototype_mapboxTheme {
@@ -88,16 +92,21 @@ class MainActivity : ComponentActivity() {
         mapView.mapboxMap.loadStyle(Style.MAPBOX_STREETS)
         // Add the map view to the activity (you can also add it to other views as a child)
         setContentView(mapView)
+        // Add the user device location puck
         with(mapView) {
-            location.locationPuck = createDefault2DPuck(withBearing = true)
+            location.locationPuck = createDefault2DPuck(withBearing = false)
             location.enabled = true
-            location.puckBearing = PuckBearing.COURSE
-            viewport.transitionTo(
-                targetState = viewport.makeFollowPuckViewportState(),
-                transition = viewport.makeImmediateViewportTransition()
-            )
+            // adds the little arrow on the puck
+//            location.puckBearing = PuckBearing.COURSE
+            // makes the camera follow the device location
+//            viewport.transitionTo(
+//                targetState = viewport.makeFollowPuckViewportState(),
+//                transition = viewport.makeImmediateViewportTransition()
+//            )
         }
 
+        // Follows the user device location or centers it on start. I'm not sure if this is following or initially setting.
+        mapView.location.addOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
     }
 
     // https://docs.mapbox.com/android/maps/guides/user-location/permissions/
@@ -108,6 +117,18 @@ class MainActivity : ComponentActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+    // https://docs.mapbox.com/android/maps/guides/camera-and-animation/camera/#set-after-map-initialization
+    // Set camera based on device location
+    private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
+        mapView.mapboxMap.setCamera(
+            CameraOptions.Builder()
+                .zoom(14.0)
+                .center(it)
+                .build()
+        )
+        mapView.gestures.focalPoint = mapView.mapboxMap.pixelForCoordinate(it)
     }
 }
 
