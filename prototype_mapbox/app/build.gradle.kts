@@ -69,4 +69,5 @@ dependencies {
     implementation(libs.mapbox)
     // If you're using compose also add the compose extension
     implementation(libs.maps.compose)
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 }
