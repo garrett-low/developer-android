@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -80,7 +81,7 @@ class MainActivity : ComponentActivity() {
         }
 
         super.onCreate(savedInstanceState)
-//        enableEdgeToEdge()
+        enableEdgeToEdge()
         // Retrieves the mapbox token from developer-config.xml resources
         MapboxOptions.accessToken = getString(R.string.mapbox_access_token_public)
 //        setContent {
@@ -130,11 +131,26 @@ class MainActivity : ComponentActivity() {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+            ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+            ) == PackageManager.PERMISSION_GRANTED
         ) {
+            // Center the camera on the user's location
+            fusedLocationClient.lastLocation.addOnSuccessListener {
+                mapView.mapboxMap.setCamera(
+                    CameraOptions.Builder()
+                        //                .center(Point.fromLngLat(-98.0, 39.5))
+                        .center(Point.fromLngLat(it.longitude, it.latitude))
+                        .pitch(0.0)
+                        .zoom(11.5)
+                        .bearing(0.0)
+                        .build()
+                )
+
+                Log.d(logTag, "it.longitude: ${it.longitude}, it.latitude: ${it.latitude}")
+            }
+        } else {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -142,22 +158,7 @@ class MainActivity : ComponentActivity() {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-
-        // Center the camera on the user's location
-        fusedLocationClient.getLastLocation().addOnSuccessListener {
-            mapView.mapboxMap.setCamera(
-                CameraOptions.Builder()
-                    //                .center(Point.fromLngLat(-98.0, 39.5))
-                    .center(Point.fromLngLat(it.longitude, it.latitude))
-                    .pitch(0.0)
-                    .zoom(12.0)
-                    .bearing(0.0)
-                    .build()
-            )
-
-            Log.d(logTag, "it.longitude: ${it.longitude}, it.latitude: ${it.latitude}")
+            //return
         }
 
 
